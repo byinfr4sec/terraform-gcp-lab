@@ -3,25 +3,28 @@
 # Terraform Essentials: VPC and Subnet - Google Cloud Lab
 # Automação criada por: Rapha "infr4SeC" Pereira
 # ============================================================
-# Este script automatiza o laboratório do Qwiklabs:
-# "Terraform Essentials: VPC and Subnet"
-# ============================================================
-
-# ✅ Pré-requisitos:
-# - Executar dentro do Cloud Shell do Google Cloud
-# - Projeto ativo no Qwiklabs com permissões adequadas
-# ============================================================
 
 echo "🚀 Iniciando configuração do ambiente Terraform + GCP..."
+echo ""
 
-# === VARIÁVEIS DE CONFIGURAÇÃO ===
-PROJECT_ID=$(gcloud config get-value project)
-REGION="us-central1"
-ZONE="us-central1-a"
+# === INPUTS DO USUÁRIO ===
+read -p "👉 Digite o PROJECT_ID fornecido pelo lab: " PROJECT_ID
+read -p "🌎 Digite a REGION (ex: us-central1): " REGION
+read -p "🗺️  Digite a ZONE (ex: us-central1-a): " ZONE
+
+# === VALIDAÇÃO SIMPLES ===
+if [ -z "$PROJECT_ID" ] || [ -z "$REGION" ] || [ -z "$ZONE" ]; then
+  echo "❌ Erro: Todos os campos (PROJECT_ID, REGION, ZONE) são obrigatórios."
+  exit 1
+fi
+
 BUCKET_NAME="${PROJECT_ID}-terraform-state"
 
-echo "📦 Projeto ativo: $PROJECT_ID"
-echo "🌎 Região: $REGION | Zona: $ZONE"
+echo ""
+echo "📦 Projeto: $PROJECT_ID"
+echo "🌍 Região: $REGION"
+echo "🧭 Zona: $ZONE"
+echo ""
 
 # === CONFIGURA GCP ===
 gcloud config set project "$PROJECT_ID"
@@ -29,14 +32,14 @@ gcloud config set compute/region "$REGION"
 gcloud config set compute/zone "$ZONE"
 
 # === CRIA BUCKET PARA STATE DO TERRAFORM ===
-echo "🪣 Criando bucket para armazenar o state remoto do Terraform..."
+echo "🪣 Criando bucket remoto para o Terraform state..."
 gcloud storage buckets create "gs://${BUCKET_NAME}" \
   --project="${PROJECT_ID}" \
-  --location=us \
+  --location="${REGION}" \
   --uniform-bucket-level-access || echo "⚠️ Bucket já existe, prosseguindo..."
 
 # === HABILITA APIs NECESSÁRIAS ===
-echo "⚙️ Ativando API Cloud Resource Manager..."
+echo "⚙️ Ativando Cloud Resource Manager API..."
 gcloud services enable cloudresourcemanager.googleapis.com --project="${PROJECT_ID}"
 
 # === CRIA DIRETÓRIO DO PROJETO ===
@@ -126,30 +129,32 @@ output "subnet_name" {
 }
 EOF
 
-# === INICIALIZA, PLANEJA E APLICA CONFIGURAÇÕES ===
+# === EXECUÇÃO DO TERRAFORM ===
+echo ""
 echo "🔧 Inicializando Terraform..."
 terraform init
 
-echo "🧩 Verificando plano de execução..."
+echo ""
+echo "🧩 Gerando plano de execução..."
 terraform plan
 
+echo ""
 echo "🚀 Aplicando configurações..."
 terraform apply --auto-approve
 
 # === RESULTADOS ===
+echo ""
 echo "✅ Recursos criados com sucesso!"
 terraform output
 
-# === INSTRUÇÕES DE VALIDAÇÃO ===
+# === INSTRUÇÕES FINAIS ===
 echo ""
-echo "🔍 Validação manual (no Console GCP):"
-echo "1️⃣ Acesse: VPC Network → VPC networks → confirme 'custom-vpc-network'"
-echo "2️⃣ Acesse: Subnets → confirme 'subnet-us'"
-echo "3️⃣ Acesse: Firewall rules → confirme 'allow-ssh' e 'allow-icmp'"
+echo "🔍 Validação manual no Console GCP:"
+echo "  → VPC network → confirmar 'custom-vpc-network'"
+echo "  → Subnets → confirmar 'subnet-us'"
+echo "  → Firewall → confirmar 'allow-ssh' e 'allow-icmp'"
 echo ""
-
-# === LIMPEZA OPCIONAL ===
-echo "🧹 Para remover os recursos e evitar custos, execute:"
+echo "🧹 Para limpar o ambiente após o teste, execute:"
 echo "terraform destroy --auto-approve"
 echo ""
-echo "🧱 Lab Terraform VPC & Subnet concluído com sucesso!"
+echo "🧱 Lab Terraform VPC & Subnet finalizado!"
